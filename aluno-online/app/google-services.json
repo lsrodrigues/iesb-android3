@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1044105798929",
+    "firebase_url": "https://alnonline-a3c81.firebaseio.com",
+    "project_id": "alnonline-a3c81",
+    "storage_bucket": "alnonline-a3c81.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044105798929:android:0d18a8fdd0123fec",
+        "android_client_info": {
+          "package_name": "com.example.lucas.alnOnline"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1044105798929-ddhsrluqgvdes3jml34p1oh0i00hm8p5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACr3WvC9HK2IE65NDLXFtgmhz1pbU4TU0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
