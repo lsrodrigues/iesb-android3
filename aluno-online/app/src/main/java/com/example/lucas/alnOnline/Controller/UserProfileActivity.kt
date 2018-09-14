@@ -1,14 +1,10 @@
 package com.example.lucas.alnOnline.Controller
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.provider.MediaStore
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
 import com.example.lucas.alnOnline.Entity.User
@@ -23,8 +19,6 @@ import java.io.ByteArrayOutputStream
 
 class UserProfileActivity : AppCompatActivity() {
 
-    private val CAMERA = 1
-    private val REQUEST_PERMISSION = 1
     private val REQUEST_SELECT_IMAGE_IN_ALBUM = 1
     private val PHOTO_MAX_SIZE: Long = 100 * 1024
     private var auth: FirebaseAuth? = null
@@ -32,10 +26,10 @@ class UserProfileActivity : AppCompatActivity() {
     private var database: FirebaseDatabase? = null
     private var storage: FirebaseStorage? = null
     private var student: User = User()
-    private var studentDBRef: DatabaseReference? = null
-    private var studentStoreRef: StorageReference? = null
-    private var photoData: ByteArray? = null
-    private val PHOTO_NAME: String = "my_profile_photo"
+    private var userDBRef: DatabaseReference? = null
+    private var userStoreRef: StorageReference? = null
+    private var photoContent: ByteArray? = null
+    private val PHOTO_NAME: String = "profile_photo"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,8 +37,6 @@ class UserProfileActivity : AppCompatActivity() {
 
         save.setOnClickListener { saveStudent() }
         picture.setOnClickListener { selectImageInAlbum() }
-//        btn_change_password.setOnClickListener { changePassword() }
-//        btn_logout.setOnClickListener { performLogOut() }
         configFirebase()
         retrieveStudentProfileFromCloud()
     }
@@ -53,11 +45,9 @@ class UserProfileActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         user = auth?.currentUser
         database = FirebaseDatabase.getInstance()
-        studentDBRef = database?.getReference("user")
-//        newDBRef = database?.getReference("new")
-//        studentNewsDBRef = database?.getReference("student_news")
+        userDBRef = database?.getReference("user")
         storage = FirebaseStorage.getInstance()
-        studentStoreRef = storage?.getReference("user")
+        userStoreRef = storage?.getReference("user")
     }
 
     private fun saveStudent() {
@@ -65,23 +55,11 @@ class UserProfileActivity : AppCompatActivity() {
             saveStudentInfo() {
                 val intent = Intent(this@UserProfileActivity, UserNewsListActivity::class.java)
                 startActivity(intent)
-//                generateNews() {
-//                    finish()
-//                }
             }
         }
     }
 
     private fun retrieveStudentProfileFromCloud() {
-        if (user == null) {
-            Toast.makeText(this@UserProfileActivity, "Erro obtendo usuário corrente!", Toast.LENGTH_LONG).show()
-//            performLogOut()
-            return
-        }
-        if (studentDBRef == null) {
-            Toast.makeText(this@UserProfileActivity, "Erro obtendo dados do usuário!", Toast.LENGTH_LONG).show()
-            return
-        }
         val studentListener = object: ValueEventListener {
             override fun onDataChange(studentSnapshot: DataSnapshot) {
                 if (studentSnapshot.exists()) {
@@ -97,10 +75,10 @@ class UserProfileActivity : AppCompatActivity() {
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@UserProfileActivity, "Erro recuperando Estudante: ${error.toException()}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@UserProfileActivity, "Ops, houve um erro na recuperação do usuário: ${error.toException()}", Toast.LENGTH_LONG).show()
             }
         }
-        studentDBRef!!.child(user!!.uid).addListenerForSingleValueEvent(studentListener)
+        userDBRef!!.child(user!!.uid).addListenerForSingleValueEvent(studentListener)
     }
 
     private fun retrieveStudentPhotoFromCloudWith(photoStoreRef: String) {
@@ -113,13 +91,13 @@ class UserProfileActivity : AppCompatActivity() {
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val photoByteArray = task.result
-                        photoData = photoByteArray
+                        photoContent = photoByteArray
                         val photoBMP = BitmapFactory.decodeByteArray(photoByteArray, 0, photoByteArray.size)
                         photoBMP.let {
                             picture.setImageBitmap(photoBMP)
                         }
                     } else {
-                        Toast.makeText(this@UserProfileActivity, "Erro baixando foto do perfil: ${task.exception.toString()}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@UserProfileActivity, "Erro no download da foto de perfil: ${task.exception.toString()}", Toast.LENGTH_LONG).show()
                     }
                 }
     }
@@ -128,10 +106,10 @@ class UserProfileActivity : AppCompatActivity() {
     private fun saveStudentInfo(completion: () -> Unit) {
         if (user == null) {
             Toast.makeText(this@UserProfileActivity, "Erro obtendo usuário corrente!", Toast.LENGTH_LONG).show()
-//            performLogOut()
+//            logOut()
             return
         }
-        if (studentDBRef == null) {
+        if (userDBRef == null) {
             Toast.makeText(this@UserProfileActivity, "Erro ao obter referência do banco de dados!", Toast.LENGTH_LONG).show()
             return
         }
@@ -140,7 +118,7 @@ class UserProfileActivity : AppCompatActivity() {
         student.phone = phone_txt.text.toString()
         student.id = user!!.uid
         student.mail = mail.text.toString()
-        studentDBRef!!.child(user!!.uid).setValue(student).addOnCompleteListener { task ->
+        userDBRef!!.child(user!!.uid).setValue(student).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 Toast.makeText(this@UserProfileActivity, "Informações salvas com sucesso!", Toast.LENGTH_LONG).show()
             } else {
@@ -151,18 +129,17 @@ class UserProfileActivity : AppCompatActivity() {
     }
 
     private fun saveStudentPhoto(completion: () -> Unit) {
-        val photoData = photoData
+        val photoData = photoContent
         if (photoData == null) { return } else
             if (user == null) {
                 Toast.makeText(this@UserProfileActivity, "Erro obtendo usuário corrente!", Toast.LENGTH_LONG).show()
-//                performLogOut()
                 return
             }
-        if (studentDBRef == null) {
+        if (userDBRef == null) {
             Toast.makeText(this@UserProfileActivity, "Erro ao obter referência ao armazenamento!", Toast.LENGTH_LONG).show()
             return
         }
-        studentStoreRef!!.child(user!!.uid).child(PHOTO_NAME).putBytes(photoData)
+        userStoreRef!!.child(user!!.uid).child(PHOTO_NAME).putBytes(photoData)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         student.image = task.result.metadata!!.path
@@ -183,25 +160,17 @@ class UserProfileActivity : AppCompatActivity() {
         }
     }
 
-    private fun intentToCaptureImage() {
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startActivityForResult(intent, CAMERA)
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         val imageStream = ByteArrayOutputStream()
-//        val imageData = data!!.extras!!.get("data") as Bitmap
-
         val selectedImagePath = data!!.data
         val imageData = MediaStore.Images.Media
                 .getBitmap(contentResolver, selectedImagePath)
 
-//        val imageData = data?.getData() as Bitmap
         picture.setImageBitmap(imageData)
         imageData.compress(Bitmap.CompressFormat.PNG, 100, imageStream)
-        photoData = imageStream.toByteArray()
+        photoContent = imageStream.toByteArray()
     }
 
 }

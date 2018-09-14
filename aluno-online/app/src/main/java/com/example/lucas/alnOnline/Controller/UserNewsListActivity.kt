@@ -33,7 +33,7 @@ class UserNewsListActivity : AppCompatActivity() {
 
         btn_user_detail.setOnClickListener { goToProfile() }
 
-        val bannerImagesIndex: Array<Int> = arrayOf(R.drawable.iesb, R.drawable.iesb, R.drawable.iesb)
+        val bannerImagesIndex: Array<Int> = arrayOf(R.drawable.iesb, R.drawable.download, R.drawable.visionario)
         banner.photoResourcesIndex = bannerImagesIndex
         banner.transitionTime = 3000
 
@@ -42,33 +42,23 @@ class UserNewsListActivity : AppCompatActivity() {
         studentNewsTable.itemAnimator = DefaultItemAnimator()
         newsAdapter = NewsAdapter(this)
         studentNewsTable.adapter = newsAdapter
-        setupFirebase()
-        retrieveNewsFromCloud()
+        configFirebase()
+        getNewsFromCloud()
     }
 
-    private fun setupFirebase() {
+    private fun configFirebase() {
         auth = FirebaseAuth.getInstance()
         user = auth?.currentUser
         database = FirebaseDatabase.getInstance()
         newsDBRef = database?.getReference("/news")
     }
 
-    private fun retrieveNewsFromCloud() {
-        if (user == null) {
-            Toast.makeText(this@UserNewsListActivity, "Erro obtendo usuário corrente!", Toast.LENGTH_LONG).show()
-            performLogOut()
-            return
-        }
-        if (newsDBRef == null) {
-            Toast.makeText(this@UserNewsListActivity, "Erro obtendo dados do usuário!", Toast.LENGTH_LONG).show()
-            return
-        }
-
+    private fun getNewsFromCloud() {
         val firebaseDatabase = FirebaseDatabase.getInstance()
         val databaseReference = firebaseDatabase.getReference("/news")
         databaseReference.addValueEventListener(object : ValueEventListener {
             override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@UserNewsListActivity, "Erro recuperando lista de notícias: ${error.toException()}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@UserNewsListActivity, "Erro na recuperação da lista de notícias: ${error.toException()}", Toast.LENGTH_LONG).show()
             }
 
             override fun onDataChange(studentNewsSnapshot: DataSnapshot) {
@@ -85,7 +75,7 @@ class UserNewsListActivity : AppCompatActivity() {
         })
     }
 
-    private fun performLogOut() {
+    private fun logOut() {
         auth!!.signOut()
         val intent = Intent(this@UserNewsListActivity, LoginActivity::class.java)
         startActivity(intent)
@@ -97,13 +87,13 @@ class UserNewsListActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun goToNewDetail(new: New) {
-        val intent = Intent(this@UserNewsListActivity, NewDetailActivity::class.java)
-        intent.putExtra("title",new.title)
-        intent.putExtra("description",new.description)
-        intent.putExtra("datePosted",new.datePosted)
-        startActivity(intent)
-    }
+//    private fun goToNewDetail(new: New) {
+//        val intent = Intent(this@UserNewsListActivity, NewDetailActivity::class.java)
+//        intent.putExtra("title",new.title)
+//        intent.putExtra("description",new.description)
+//        intent.putExtra("datePosted",new.datePosted)
+//        startActivity(intent)
+//    }
 
 
 }

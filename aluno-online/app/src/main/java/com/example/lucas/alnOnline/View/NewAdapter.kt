@@ -11,7 +11,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
 class NewsAdapter(private val context: Context): RecyclerView.Adapter<NewViewHolder>() {
-    private val PHOTO_MAX_SIZE: Long = 50 * 1024
+    private val PHOTO_MAX_SIZE: Long = 1024 * 1024
     private var news: MutableList<New> = mutableListOf()
 
     fun setData(newNews: MutableList<New>) {
